@@ -1,0 +1,120 @@
+Category,Task,Status,Notes,Priority
+Change Management,Obtain change approval from stakeholders,,,Critical
+Change Management,Schedule maintenance window (if required),,,High
+Change Management,Notify all teams about upgrade schedule,,,High
+Change Management,Document upgrade reason and business justification,,,Medium
+Change Management,Assign on-call engineer for upgrade window,,,High
+Change Management,Prepare rollback plan and decision criteria,,,Critical
+Pre-Upgrade: Planning,Review EKS release notes for target version (<TARGET_VERSION>),,,High
+Pre-Upgrade: Planning,Review Kubernetes changelog for breaking changes,,,High
+Pre-Upgrade: Planning,Check addon compatibility matrix (Karpenter, ArgoCD, etc.),,High
+Pre-Upgrade: Planning,Identify deprecated APIs used in workloads,,,High
+Pre-Upgrade: Planning,Review EKS Upgrade Insights recommendations,,,Critical
+Pre-Upgrade: Planning,Estimate upgrade duration based on cluster size,,,Medium
+Pre-Upgrade: Planning,Assess cost impact of upgrade (if applicable),,,Low
+Pre-Upgrade: Backup,Backup all Kubernetes manifests: kubectl get all --all-namespaces -o yaml > backup-<DATE>.yaml,,,Critical
+Pre-Upgrade: Backup,Backup Terraform state: terraform state pull > terraform-state-<DATE>.json,,,Critical
+Pre-Upgrade: Backup,Export cluster configuration: aws eks describe-cluster --name <cluster_name> > cluster-config-<DATE>.json,,,High
+Pre-Upgrade: Backup,Backup custom resource definitions (CRDs): kubectl get crds -o yaml > crds-<DATE>.yaml,,,High
+Pre-Upgrade: Backup,Backup secrets (if not using external secret manager): kubectl get secrets --all-namespaces -o yaml > secrets-<DATE>.yaml,,,High
+Pre-Upgrade: Backup,Verify backup integrity and accessibility,,,Critical
+Pre-Upgrade: Baseline,Capture performance baseline metrics (CPU, memory, latency),,,High
+Pre-Upgrade: Baseline,Record current pod count per namespace,,,Medium
+Pre-Upgrade: Baseline,Document current node count and instance types,,,Medium
+Pre-Upgrade: Baseline,Save current addon versions,,,High
+Pre-Upgrade: Baseline,Record API server response times,,,Medium
+Pre-Upgrade: Baseline,Document current cluster autoscaling behavior,,,Medium
+Pre-Upgrade: Validation,Verify cluster is running on expected version (<CURRENT_VERSION>),,Critical
+Pre-Upgrade: Validation,Check all workloads are healthy: kubectl get pods --all-namespaces | grep -v Running,,Critical
+Pre-Upgrade: Validation,Verify no pending pods: kubectl get pods --all-namespaces --field-selector=status.phase!=Running,,Critical
+Pre-Upgrade: Validation,Check node versions: kubectl get nodes -o wide,,High
+Pre-Upgrade: Validation,Verify all nodes are Ready: kubectl get nodes | grep -v Ready,,Critical
+Pre-Upgrade: Validation,Check Karpenter version compatibility,,High
+Pre-Upgrade: Validation,Verify kubectl client version matches target version (<TARGET_VERSION>),,High
+Pre-Upgrade: Validation,Open AWS Console → EKS → Cluster → Observability → Upgrade insights,,Critical
+Pre-Upgrade: Validation,Refresh upgrade insights and verify all show Passing for <TARGET_VERSION>,,Critical
+Pre-Upgrade: Validation,Verify Amazon Linux compatibility insight shows Passing,,Critical
+Pre-Upgrade: Validation,Verify kube-proxy version skew insight shows Passing,,Critical
+Pre-Upgrade: Validation,Verify EKS add-on version compatibility insight shows Passing,,Critical
+Pre-Upgrade: Validation,Verify Cluster health issues insight shows Passing,,Critical
+Pre-Upgrade: Validation,Verify Kubelet version skew insight shows Passing,,Critical
+Pre-Upgrade: Validation,Test application smoke tests (critical workloads),,High
+Pre-Upgrade: Validation,Verify network connectivity between pods,,High
+Pre-Upgrade: Validation,Check storage classes and PVCs are healthy,,High
+Pre-Upgrade: Validation,Verify ingress controllers are operational,,Medium
+Pre-Upgrade: Validation,Test DNS resolution: kubectl run -it --rm test --image=busybox --restart=Never -- nslookup kubernetes.default,,Medium
+Pre-Upgrade: Configuration,Update terraform.tfvars: kubernetes_version = <TARGET_VERSION>,,Critical
+Pre-Upgrade: Configuration,Update addons.tf with compatible addon versions,,Critical
+Pre-Upgrade: Configuration,Review Terraform plan: terraform plan -out=tfplan,,Critical
+Pre-Upgrade: Configuration,Verify plan shows EKS cluster version update to <TARGET_VERSION>,,Critical
+Pre-Upgrade: Configuration,Verify plan shows addon version updates,,High
+Pre-Upgrade: Configuration,Verify plan shows node group AMI updates,,High
+Pre-Upgrade: Configuration,Review plan for unexpected changes,,High
+Pre-Upgrade: Configuration,Get second engineer review of Terraform plan,,High
+During Upgrade: Execution,Run terraform apply tfplan,,Critical
+During Upgrade: Execution,Monitor control plane upgrade progress in AWS Console,,Critical
+During Upgrade: Execution,Monitor Terraform output for errors,,Critical
+During Upgrade: Execution,Watch cluster API server availability,,Critical
+During Upgrade: Execution,Monitor addon upgrade progress,,High
+During Upgrade: Execution,Monitor node upgrade progress,,High
+During Upgrade: Execution,Document any errors or warnings encountered,,High
+During Upgrade: Execution,Monitor CloudWatch metrics for anomalies,,Medium
+After Upgrade: Control Plane,Verify cluster version: aws eks describe-cluster --name <cluster_name> --query cluster.version (should show <TARGET_VERSION>),,Critical
+After Upgrade: Control Plane,Verify API server is accessible: kubectl get nodes,,Critical
+After Upgrade: Control Plane,Check upgrade status in AWS Console: EKS → Cluster → Update history,,Critical
+After Upgrade: Control Plane,Verify upgrade shows Successful status,,Critical
+After Upgrade: Control Plane,Check API server logs for errors,,High
+After Upgrade: Nodes,Verify all nodes are Ready: kubectl get nodes,,Critical
+After Upgrade: Nodes,Check node versions: kubectl get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion (all should show v<TARGET_VERSION>.x),,Critical
+After Upgrade: Nodes,Verify worker node AMI in AWS Console (EC2 instances),,High
+After Upgrade: Nodes,Check node capacity and resources: kubectl top nodes,,Medium
+After Upgrade: Nodes,Verify node labels and taints are correct,,Medium
+After Upgrade: Addons,Verify Karpenter version: kubectl get deployment -n karpenter karpenter -o jsonpath='{.spec.template.spec.containers[0].image}',,High
+After Upgrade: Addons,Check Karpenter status: kubectl get pods -n karpenter,,High
+After Upgrade: Addons,Verify Karpenter NodePools: kubectl get nodepools,,High
+After Upgrade: Addons,Verify Karpenter EC2NodeClasses: kubectl get ec2nodeclasses,,High
+After Upgrade: Addons,Check CoreDNS version: kubectl get deployment -n kube-system coredns -o jsonpath='{.spec.template.spec.containers[0].image}',,High
+After Upgrade: Addons,Verify kube-proxy version: kubectl get daemonset -n kube-system kube-proxy -o jsonpath='{.spec.template.spec.containers[0].image}',,High
+After Upgrade: Addons,Verify VPC CNI version (if applicable),,Medium
+After Upgrade: Addons,Check all addon pods are Running: kubectl get pods -n kube-system,,High
+After Upgrade: Addons,Review addon logs for errors: kubectl logs -n kube-system -l k8s-app=kube-proxy --tail=50,,Medium
+After Upgrade: Workloads,Check all pods are running: kubectl get pods --all-namespaces,,Critical
+After Upgrade: Workloads,Verify no CrashLoopBackOff pods: kubectl get pods --all-namespaces | grep CrashLoopBackOff,,Critical
+After Upgrade: Workloads,Verify no ImagePullBackOff pods: kubectl get pods --all-namespaces | grep ImagePullBackOff,,Critical
+After Upgrade: Workloads,Check pod resource usage: kubectl top pods --all-namespaces,,Medium
+After Upgrade: Workloads,Verify deployments have correct replicas: kubectl get deployments --all-namespaces,,High
+After Upgrade: Workloads,Verify statefulsets are healthy: kubectl get statefulsets --all-namespaces,,High
+After Upgrade: Workloads,Verify daemonsets are running on all nodes: kubectl get daemonsets --all-namespaces,,Medium
+After Upgrade: Networking,Test DNS resolution: kubectl run -it --rm test --image=busybox --restart=Never -- nslookup kubernetes.default,,High
+After Upgrade: Networking,Verify service endpoints: kubectl get endpoints --all-namespaces,,Medium
+After Upgrade: Networking,Test ingress connectivity (if applicable),,Medium
+After Upgrade: Networking,Verify network policies are working (if applicable),,Medium
+After Upgrade: Networking,Test pod-to-pod communication,,Medium
+After Upgrade: Storage,Verify PVCs are bound: kubectl get pvc --all-namespaces,,High
+After Upgrade: Storage,Test volume mounts and access,,High
+After Upgrade: Storage,Verify storage classes are available: kubectl get storageclass,,Medium
+After Upgrade: Storage,Test dynamic provisioning (if applicable),,Medium
+After Upgrade: Security,Verify EKS Access Entries are correct,,High
+After Upgrade: Security,Check IAM roles and policies,,High
+After Upgrade: Security,Verify security groups allow communication,,High
+After Upgrade: Security,Test RBAC permissions,,Medium
+After Upgrade: Security,Verify pod security policies/standards (if applicable),,Medium
+After Upgrade: Testing,Run application smoke tests,,Critical
+After Upgrade: Testing,Test critical application workflows,,Critical
+After Upgrade: Testing,Verify load balancer functionality (if applicable),,High
+After Upgrade: Testing,Test Karpenter autoscaling: kubectl apply -f k8s/test-karpenter.yaml,,High
+After Upgrade: Testing,Verify Karpenter provisions nodes correctly,,High
+After Upgrade: Testing,Test node termination and replacement,,Medium
+After Upgrade: Monitoring,Verify monitoring stack is collecting metrics,,High
+After Upgrade: Monitoring,Check alerting rules are firing correctly,,High
+After Upgrade: Monitoring,Compare post-upgrade metrics to baseline,,High
+After Upgrade: Monitoring,Monitor for 24-48 hours post-upgrade,,High
+After Upgrade: Monitoring,Check CloudWatch logs for errors,,Medium
+After Upgrade: Monitoring,Review application logs for errors,,Medium
+After Upgrade: Documentation,Update runbooks with new version,,Medium
+After Upgrade: Documentation,Document any issues encountered and resolutions,,High
+After Upgrade: Documentation,Update architecture diagrams if changed,,Low
+After Upgrade: Documentation,Update team knowledge base,,Medium
+After Upgrade: Sign-off,Get stakeholder sign-off on upgrade success,,High
+After Upgrade: Sign-off,Close change request,,High
+After Upgrade: Sign-off,Communicate upgrade completion to teams,,High

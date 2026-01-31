@@ -1,0 +1,30 @@
+# Test workload to trigger Karpenter node provisioning
+# This deployment requests more resources than available on initial node group
+# Karpenter should provision a spot node to schedule this pod
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-karpenter
+  namespace: default
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: test-karpenter
+  template:
+    metadata:
+      labels:
+        app: test-karpenter
+    spec:
+      # No node selector - can run on any node
+      containers:
+      - name: test
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: "1000m"      # Request 1 CPU (more than initial node group has)
+            memory: "2Gi"     # Request 2Gi memory
+          limits:
+            cpu: "2000m"
+            memory: "4Gi"

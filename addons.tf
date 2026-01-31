@@ -10,11 +10,11 @@ module "eks_blueprints_addons" {
   enable_karpenter = true
   karpenter = {
     # Karpenter >= 1.5 required for Kubernetes 1.33
-    chart_version = "1.5.0"
+    chart_version = "1.8.1" # 1.8.1 is the latest version as of 2026-01-31 with support for Kubernetes 1.34
   }
-  enable_argocd    = true
+  enable_argocd = true
   argocd = {
-    chart_version = "9.3.7"
+    chart_version = "9.3.7" # 9.3.7 is the latest version as of 2026-01-31 with support for Kubernetes 1.34
     namespace     = "argocd"
   }
   enable_argo_rollouts  = true
