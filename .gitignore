@@ -3,6 +3,7 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
+k8s/karpenter-*.yaml
 !terraform.tfvars.example
 crash.log
 crash.*.log

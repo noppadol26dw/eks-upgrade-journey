@@ -58,8 +58,7 @@ To override, set `availability_zones` in `terraform.tfvars`, e.g. `["ap-southeas
 
 ## Karpenter
 
-Subnets and the node security group are tagged for Karpenter discovery. After apply, you may need to create a NodePool and EC2NodeClass (or Provisioner) so Karpenter can provision nodes. <br>
-See [Karpenter docs](https://karpenter.sh/) for your Kubernetes version.
+Subnets and the node security group are tagged for Karpenter discovery. A NodePool (Spot) and EC2NodeClass (AL2023) are created in `karpenter.tf`. Spot instance types: t3.medium, t3a.medium, t3.large, t3a.large, m5.large, m5a.large, m6i.large. Edit `karpenter.tf` to change instance types. See [Karpenter docs](https://karpenter.sh/) for more.
 
 ## Phase 2
 

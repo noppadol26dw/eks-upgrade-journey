@@ -51,3 +51,12 @@ module "eks" {
     Terraform   = "true"
   }
 }
+
+# AL2023 nodes need EKS Access Entry for system:bootstrappers/system:nodes. 
+# Karpenter node role is created by Blueprints Addons but not added to cluster access, so we're going to add it explicitly.
+resource "aws_eks_access_entry" "karpenter_node" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = module.eks_blueprints_addons.karpenter.node_iam_role_arn
+  type          = "EC2_LINUX"
+  depends_on    = [module.eks_blueprints_addons]
+}

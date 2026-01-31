@@ -8,6 +8,10 @@ module "eks_blueprints_addons" {
   oidc_provider_arn = module.eks.oidc_provider_arn
 
   enable_karpenter = true
+  karpenter = {
+    # Karpenter >= 1.5 required for Kubernetes 1.33
+    chart_version = "1.5.0"
+  }
   enable_argocd    = true
   argocd = {
     chart_version = "9.3.7"
